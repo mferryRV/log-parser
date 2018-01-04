@@ -139,8 +139,8 @@ function callsFromLogsRes(logs) {
 			}
 
 			// Also get the timestamp, concert session ID, and concert user
-			callObj.timestamp = log.split(' ').slice(0,2).join(' ').replace(',','.');	
 			try {
+				callObj.timestamp = log.split(' ').slice(0,2).join(' ').replace(',','.');	
 				callObj.concertSessionId = log.match(/sessionId=\S+/)[0].replace('sessionId=','');
 				callObj.concertUser = log.match(/user=\S+/)[0].replace('user=','');
 			} catch(e) {
@@ -149,10 +149,14 @@ function callsFromLogsRes(logs) {
 			
 
 			// Also get the IP addresses
-			log.match(/[A-Za-z]+IpAddress="\d+\.\d+\.\d+\.\d+/g).forEach(function(match) {
-					var keyVal = match.split('="');
-					callObj[keyVal[0]] = keyVal[1];
-			});
+			try {
+				log.match(/[A-Za-z]+IpAddress="\d+\.\d+\.\d+\.\d+/g).forEach(function(match) {
+						var keyVal = match.split('="');
+						callObj[keyVal[0]] = keyVal[1];
+				});
+			} catch(e) {
+				console.error(e);
+			}
 
 			// Return the results
 			return callObj
