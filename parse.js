@@ -122,16 +122,37 @@ function callsFromLogsRes(logs) {
 					callObj.tenantId = responseObj.tenantId || '';
 					callObj.anonymousId = responseObj.anonymousId || '';
 					callObj.sessionId = responseObj.sessionId || '';
+					// Also get any Paid Search Permalease data
+					if (responseObj.metadata) {
+						callObj.adGroupName = responseObj.metadata.adGroupName || '';
+						callObj.adGroupId = responseObj.metadata.adGroupId || '';
+						callObj.searchProvider = responseObj.metadata.searchProvider || '';
+						callObj.campaignName = responseObj.metadata.campaignName || '';
+						callObj.campaignId = responseObj.metadata.campaignId || '';
+					}
+					console.log(callObj)
 					// Add a successful response status if one was not logged
 					callObj.statusCode = responseObj.status || '200';
 			} catch (e) {
 					console.log(response);
 					console.error(e);
 			}
-			// Also get the concert session ID
-			var concertLogData = log.split('.')[0].split(' sessionId=');
-			callObj.timestamp = concertLogData[0].replace(',','.'),
-			callObj.concertSessionId = concertLogData[1];
+
+			// Also get the timestamp, concert session ID, and concert user
+			callObj.timestamp = log.split(' ').slice(0,2).join(' ').replace(',','.');	
+			try {
+				callObj.concertSessionId = log.match(/sessionId=\S+/)[0].replace('sessionId=','');
+				callObj.concertUser = log.match(/user=\S+/)[0].replace('user=','');
+			} catch(e) {
+				console.error(e);
+			}
+			
+
+			// Also get the IP addresses
+			log.match(/[A-Za-z]+IpAddress="\d+\.\d+\.\d+\.\d+/g).forEach(function(match) {
+					var keyVal = match.split('="');
+					callObj[keyVal[0]] = keyVal[1];
+			});
 
 			// Return the results
 			return callObj
@@ -144,7 +165,7 @@ function formatOutput(requestsOnly, calls) {
 		var outputFields = ["timestamp","ucid","dnis","ani","concertSessionId"]
 		// Add more for responses
 		if (!requestsOnly) {
-			Array.prototype.push.apply(outputFields, ["statusCode","tenantId","anonymousId","sessionId"])
+			Array.prototype.push.apply(outputFields, ["statusCode","tenantId","anonymousId","sessionId","clientIpAddress","publicIpAddress", "concertUser", "adGroupId", "adGroupName", "campaignId","campaignName","searchProvider"])
 		} else {
 			// Nothing happens
 		}
